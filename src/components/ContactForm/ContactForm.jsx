@@ -1,82 +1,82 @@
-import { Component } from 'react';
+import { useState } from 'react';
 import { nanoid } from 'nanoid';
 import Button from '@mui/material/Button';
 import ReactInputMask from 'react-input-mask';
 import { FormBox, TextInput } from './ContactForm.styled';
 
-export class ContactForm extends Component {
-  state = {
-    name: '',
-    number: '',
+export const ContactForm = ({ onSubmit }) => {
+  const [name, setName] = useState('');
+  const [number, setNumber] = useState('');
+
+  const options = {
+    name: setName,
+    number: setNumber,
   };
+  const nameInputId = nanoid();
+  const numberInputId = nanoid();
 
-  nameInputId = nanoid();
-  numberInputId = nanoid();
-
-  handleFormSubmit = event => {
+  const handleFormSubmit = event => {
     event.preventDefault();
 
-    const { name, number } = this.state;
-    const currentContact = { name: name, number: number };
+    const currentContact = { name, number };
 
-    this.props.onSubmit(currentContact);
-    this.reset();
+    onSubmit(currentContact);
+    reset();
   };
 
-  handleInputChange = event => {
+  const handleInputChange = event => {
     const { name, value } = event.currentTarget;
-    this.setState({ [name]: value });
+    options[name](value);
   };
 
-  reset = () => {
-    this.setState({ name: '', number: '' });
+  const reset = () => {
+    setName('');
+    setNumber('');
   };
 
-  render() {
-    return (
-      <FormBox
-        component="form"
-        sx={{
-          '& > :not(style)': {
-            m: 1,
-            width: '32ch',
-            input: { color: '#f6d9b1' },
-          },
-        }}
-        action="submit"
-        onSubmit={this.handleFormSubmit}
+  return (
+    <FormBox
+      component="form"
+      sx={{
+        '& > :not(style)': {
+          m: 1,
+          width: '32ch',
+          input: { color: '#f6d9b1' },
+        },
+      }}
+      action="submit"
+      onSubmit={handleFormSubmit}
+    >
+      <TextInput
+        label="Name"
+        variant="outlined"
+        type="text"
+        name="name"
+        id={nameInputId}
+        value={name}
+        required
+        onChange={handleInputChange}
+      />
+      <ReactInputMask
+        mask="999-99-99"
+        maskChar=""
+        value={number}
+        onChange={handleInputChange}
       >
-        <TextInput
-          label="Name"
-          variant="outlined"
-          type="text"
-          name="name"
-          id={this.nameInputId}
-          value={this.state.name}
-          required
-          onChange={this.handleInputChange}
-        />
-        <ReactInputMask
-          mask="999-99-99"
-          maskChar=""
-          value={this.state.number}
-          onChange={this.handleInputChange}
-        >
-          {() => (
-            <TextInput
-              label="Number"
-              variant="outlined"
-              type="tel"
-              name="number"
-              id={this.numberInputId}
-              required
-            />
-          )}
-        </ReactInputMask>
-        <Button variant="outlined" type="submit">
-          Add contact
-        </Button>
-      </FormBox>
-    );
-  }
-}
+        {() => (
+          <TextInput
+            label="Number"
+            variant="outlined"
+            type="tel"
+            name="number"
+            id={numberInputId}
+            required
+          />
+        )}
+      </ReactInputMask>
+      <Button variant="outlined" type="submit">
+        Add contact
+      </Button>
+    </FormBox>
+  );
+};

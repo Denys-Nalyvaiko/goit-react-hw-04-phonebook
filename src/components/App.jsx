@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { Notify } from 'notiflix';
 import { nanoid } from 'nanoid';
 import { Global } from '@emotion/react';
@@ -18,32 +18,18 @@ const theme = createTheme({
   },
 });
 
-export class App extends Component {
-  state = {
-    contacts: [],
-    filter: '',
-  };
+export const App = () => {
+  const [contacts, setContacts] = useState(
+    () => JSON.parse(localStorage.getItem(LS_CONTACT_LIST)) ?? []
+  );
+  const [filter, setFilter] = useState('');
 
-  componentDidMount() {
-    const localContacts = JSON.parse(localStorage.getItem(LS_CONTACT_LIST));
+  useEffect(() => {
+    localStorage.setItem(LS_CONTACT_LIST, JSON.stringify(contacts));
+  }, [contacts]);
 
-    localContacts &&
-      this.setState({
-        contacts: localContacts,
-      });
-  }
-
-  componentDidUpdate(_, prevState) {
-    if (prevState.contacts !== this.state.contacts) {
-      localStorage.setItem(
-        LS_CONTACT_LIST,
-        JSON.stringify(this.state.contacts)
-      );
-    }
-  }
-
-  handleFromSubmit = currentContact => {
-    const isContactNameAlreadyExists = this.state.contacts.find(
+  const handleFromSubmit = currentContact => {
+    const isContactNameAlreadyExists = contacts.find(
       ({ name }) =>
         name.toLowerCase().trim() === currentContact.name.toLowerCase().trim()
     );
@@ -53,18 +39,18 @@ export class App extends Component {
       return;
     }
 
-    this.setState(prevState => ({
-      contacts: [{ id: nanoid(), ...currentContact }, ...prevState.contacts],
-    }));
+    setContacts(prevContacts => [
+      { id: nanoid(), ...currentContact },
+      ...prevContacts,
+    ]);
   };
 
-  handleFilterInputChange = event => {
+  const handleFilterInputChange = event => {
     const { value } = event.currentTarget;
-    this.setState({ filter: value });
+    setFilter(value);
   };
 
-  updateFilteredList = () => {
-    const { contacts, filter } = this.state;
+  const updateFilteredList = () => {
     const validFilter = filter.toLowerCase().trim();
 
     return contacts.filter(({ name }) =>
@@ -72,40 +58,35 @@ export class App extends Component {
     );
   };
 
-  handleDeleteButtonClick = contactId => {
-    this.setState(({ contacts }) => ({
-      contacts: contacts.filter(({ id }) => id !== contactId),
-    }));
+  const handleDeleteButtonClick = contactId => {
+    setContacts(prevContacts =>
+      prevContacts.filter(({ id }) => id !== contactId)
+    );
   };
 
-  render() {
-    return (
-      <>
-        <Global styles={GlobalStyles} />
-        <Container>
-          <ThemeProvider theme={theme}>
-            <div>
-              <Title>Phonebook</Title>
-              <ContactForm onSubmit={this.handleFromSubmit} />
-            </div>
-            <div>
-              <ContactsTitle>Contacts</ContactsTitle>
-              <Filter
-                value={this.state.filter}
-                onChange={this.handleFilterInputChange}
+  return (
+    <>
+      <Global styles={GlobalStyles} />
+      <Container>
+        <ThemeProvider theme={theme}>
+          <div>
+            <Title>Phonebook</Title>
+            <ContactForm onSubmit={handleFromSubmit} />
+          </div>
+          <div>
+            <ContactsTitle>Contacts</ContactsTitle>
+            <Filter value={filter} onChange={handleFilterInputChange} />
+            {updateFilteredList().length === 0 ? (
+              <InfoTitle>The contact list is empty</InfoTitle>
+            ) : (
+              <ContactList
+                contacts={updateFilteredList()}
+                onDeleteButtonClick={handleDeleteButtonClick}
               />
-              {this.updateFilteredList().length === 0 ? (
-                <InfoTitle>The contact list is empty</InfoTitle>
-              ) : (
-                <ContactList
-                  contacts={this.updateFilteredList()}
-                  onDeleteButtonClick={this.handleDeleteButtonClick}
-                />
-              )}
-            </div>
-          </ThemeProvider>
-        </Container>
-      </>
-    );
-  }
-}
+            )}
+          </div>
+        </ThemeProvider>
+      </Container>
+    </>
+  );
+};
